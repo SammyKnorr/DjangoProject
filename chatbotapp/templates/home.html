@@ -1,4 +1,64 @@
-{% extends "base.html" %} {% block title %} Home Page {% endblock %}
+{% extends 'base.html' %}
+
+{% block title %}
+    Stock Sight
+{% endblock %}
+
 {% block content %}
-<p>This is the home page</p>
+<style>
+    body {
+        background-color: #000000;
+        color: #00FFFF;
+    }
+
+    .navbar, .navbar-brand, .nav-link {
+        background-color: #000000;
+        color: #00FFFF !important;
+    }
+
+    .navbar-light .navbar-nav .nav-link {
+        color: #00FFFF;
+    }
+
+    .navbar-light .navbar-nav .nav-link.active, .navbar-light .navbar-nav .nav-link:hover {
+        color: #00FFFF;
+    }
+
+    .jumbotron {
+        background-color: #000000;
+        color: #00FFFF;
+        padding: 2rem 1rem;
+    }
+
+    .btn-turquoise {
+        background-color: #00FFFF;
+        color: #000000;
+    }
+
+    .btn-turquoise:hover {
+        background-color: #00CCCC;
+        color: #000000;
+    }
+</style>
+
+<div class="jumbotron text-center">
+    <h1 class="display-4">Welcome to the Stock Trends Chatbot!</h1>
+    <p class="lead">Get the latest stock trends and suggestions from our intelligent chatbot.</p>
+    <hr class="my-4">
+    <p>Start exploring stock trends now.</p>
+    <a class="btn btn-turquoise btn-lg" href="#" role="button">Learn more</a>
+</div>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Why Use Our Chatbot?</h2>
+            <p>Our chatbot provides accurate and timely stock trends, helping you make informed investment decisions.</p>
+        </div>
+        <div class="col-md-6">
+            <h2>How It Works</h2>
+            <p>Simply ask our chatbot about any stock, and it will provide you with the latest trends and suggestions.</p>
+        </div>
+    </div>
+</div>
 {% endblock %}
