@@ -9,14 +9,16 @@
     </div>
 
 {% endif %}
-
+<br/>
+<div class="shadow p-4 mb-5 bg-body rounded" style="height:85vh">
 <h1>Register User</h1>
 <form method="post" action="{% url 'register_user' %}">
     {% csrf_token %}
     
     {{ form.as_p }}
 
-    <br/><br/>
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <br/>
+    <button type="submit" class="btn btn-primary w-100">Submit</button>
 </form>
+</div>
 {% endblock %}
