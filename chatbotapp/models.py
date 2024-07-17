@@ -1,8 +1,11 @@
 from django.db import models
+from django.contrib.auth.models import User
 
-# Create your models here.
+class Stock(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    stock_tag = models.CharField(max_length=10)
+    added_at = models.DateTimeField(auto_now_add=True)
+    graph_path = models.CharField(max_length=100, blank=True, null=True)
 
-class TodoItem(models.Model):
-    title = models.CharField(max_length=200)
-    completed = models.BooleanField(default=False)
-    
+    def __str__(self):
+        return f"{self.stock_tag} - {self.user.username}"
