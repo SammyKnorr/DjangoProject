@@ -13,19 +13,27 @@
     
     <ul class="list-group" id="stockList">
         {% for stock in stocks %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    {{ stock.stock_tag }} - Added on {{ stock.added_at }}
-                    {% if stock.graph_path %}
-                        <div><img src="{{ MEDIA_URL }}{{ stock.graph_path }}" alt="Stock graph for {{ stock.stock_tag }}" class="img-fluid"></div>
-                    {% endif %}
+            <li class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a class="text-decoration-none" data-bs-toggle="collapse" href="#collapse{{ stock.id }}" role="button" aria-expanded="false" aria-controls="collapse{{ stock.id }}">
+                            {{ stock.stock_tag }} - Added on {{ stock.added_at }}
+                        </a>
+                    </div>
+                    <div>
+                        {{ stock.shares }} shares worth ${{ stock.current_worth|floatformat:2 }}
+                        <form method="post" action="{% url 'delete_stock' stock.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </div>
                 </div>
-                <div>
-                    {{ stock.shares }} shares worth ${{ stock.current_worth|floatformat:2 }}
-                    <form method="post" action="{% url 'delete_stock' stock.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
+                <div class="collapse mt-2" id="collapse{{ stock.id }}">
+                    {% if stock.graph_path %}
+                        <div>
+                            <img src="{{ MEDIA_URL }}{{ stock.graph_path }}" alt="Stock graph for {{ stock.stock_tag }}" class="img-fluid">
+                        </div>
+                    {% endif %}
                 </div>
             </li>
         {% endfor %}
@@ -87,18 +95,26 @@ document.getElementById('addStockForm').addEventListener('submit', function(even
         if (data.success) {
             const stockList = document.getElementById('stockList');
             const newStockItem = document.createElement('li');
-            newStockItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            newStockItem.className = 'list-group-item';
             newStockItem.innerHTML = `
-                <div>
-                    ${data.stock_tag} - Added just now
-                    <div><img src="${mediaUrl}${data.stock_tag}.png" alt="Stock graph for ${data.stock_tag}" class="img-fluid"></div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a class="text-decoration-none" data-bs-toggle="collapse" href="#collapse${data.stock_id}" role="button" aria-expanded="false" aria-controls="collapse${data.stock_id}">
+                            ${data.stock_tag} - Added just now
+                        </a>
+                    </div>
+                    <div>
+                        ${data.shares} shares worth $${(data.shares * data.current_price).toFixed(2)}
+                        <form method="post" action="/delete_stock/${data.stock_id}/" style="display:inline;">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </div>
                 </div>
-                <div>
-                    ${data.shares} shares worth $${(data.shares * data.current_price).toFixed(2)}
-                    <form method="post" action="/delete_stock/${data.stock_id}/" style="display:inline;">
-                        <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
+                <div class="collapse mt-2" id="collapse${data.stock_id}">
+                    <div>
+                        <img src="${mediaUrl}${data.stock_tag}.png" alt="Stock graph for ${data.stock_tag}" class="img-fluid">
+                    </div>
                 </div>
             `;
             stockList.appendChild(newStockItem);
