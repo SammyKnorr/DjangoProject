@@ -25,7 +25,6 @@ def autocomplete_stock_tags(request):
     url = f'https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={query}&apikey={api_key}'
     response = requests.get(url)
     data = response.json()
-    print(data)
     results = []
     if 'bestMatches' in data:
         for match in data['bestMatches']:
@@ -55,6 +54,7 @@ def your_stocks(request):
     stocks = Stock.objects.filter(user=request.user)
     for stock in stocks:
         stock.current_worth = calculate_current_worth(stock.stock_tag, stock.shares)
+        generate_stock_graph(stock.stock_tag)  # Regenerate graph for each stock
     return render(request, 'your_stocks.html', {'stocks': stocks, 'form': form, 'edit_form': edit_form})
 
 @login_required
@@ -73,7 +73,6 @@ def generate_stock_graph(stock_tag):
     url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stock_tag}&apikey={api_key}'
     response = requests.get(url)
     data = response.json()
-    print(data)
     time_series = data.get('Time Series (Daily)', {})
     dates = list(time_series.keys())
     dates.sort()

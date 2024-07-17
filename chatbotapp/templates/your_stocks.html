@@ -34,7 +34,7 @@
                 <div class="collapse mt-2" id="collapse{{ stock.id }}">
                     {% if stock.graph_path %}
                         <div>
-                            <img src="{{ MEDIA_URL }}{{ stock.graph_path }}" alt="Stock graph for {{ stock.stock_tag }}" class="img-fluid">
+                            <img src="{{ MEDIA_URL }}{{ stock.graph_path }}?{{ stock.added_at.timestamp }}" alt="Stock graph for {{ stock.stock_tag }}" class="img-fluid">
                         </div>
                     {% endif %}
                 </div>
@@ -101,10 +101,6 @@
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
-
 <script>
 const mediaUrl = "{{ MEDIA_URL }}";  // Pass MEDIA_URL to JavaScript
 
@@ -148,7 +144,7 @@ document.getElementById('addStockForm').addEventListener('submit', function(even
                 </div>
                 <div class="collapse mt-2" id="collapse${data.stock_id}">
                     <div>
-                        <img src="${mediaUrl}${data.stock_tag}.png" alt="Stock graph for ${data.stock_tag}" class="img-fluid">
+                        <img src="${mediaUrl}${data.stock_tag}.png?${new Date().getTime()}" alt="Stock graph for ${data.stock_tag}" class="img-fluid">
                     </div>
                 </div>
             `;
