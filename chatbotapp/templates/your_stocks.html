@@ -22,6 +22,9 @@
                     </div>
                     <div>
                         {{ stock.shares }} shares worth ${{ stock.current_worth|floatformat:2 }}
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editSharesModal" data-stock-id="{{ stock.id }}" data-stock-shares="{{ stock.shares }}">
+                            Edit Shares
+                        </button>
                         <form method="post" action="{% url 'delete_stock' stock.id %}" style="display:inline;">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
@@ -73,6 +76,31 @@
     </div>
 </div>
 
+<!-- Edit Shares Modal -->
+<div class="modal fade" id="editSharesModal" tabindex="-1" aria-labelledby="editSharesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editSharesModalLabel">Edit Shares</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" id="editSharesForm">
+                    {% csrf_token %}
+                    {{ edit_form.shares.label_tag }}
+                    {{ edit_form.shares }}
+                    <input type="hidden" name="stock_id" id="editSharesStockId">
+                    <div id="editFormErrors" class="alert alert-danger" style="display: none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" form="editSharesForm" class="btn btn-turquoise" id="submitEditSharesForm">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 const mediaUrl = "{{ MEDIA_URL }}";  // Pass MEDIA_URL to JavaScript
 
@@ -105,6 +133,9 @@ document.getElementById('addStockForm').addEventListener('submit', function(even
                     </div>
                     <div>
                         ${data.shares} shares worth $${(data.shares * data.current_price).toFixed(2)}
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editSharesModal" data-stock-id="${data.stock_id}" data-stock-shares="${data.shares}">
+                            Edit Shares
+                        </button>
                         <form method="post" action="/delete_stock/${data.stock_id}/" style="display:inline;">
                             <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
@@ -119,6 +150,62 @@ document.getElementById('addStockForm').addEventListener('submit', function(even
             `;
             stockList.appendChild(newStockItem);
             form.reset();
+            document.querySelector('[data-bs-dismiss="modal"]').click();
+        } else {
+            formErrors.innerHTML = '';
+            for (const error in data.errors) {
+                formErrors.innerHTML += `${data.errors[error]}<br>`;
+            }
+            formErrors.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+});
+
+// Handle opening the Edit Shares modal
+document.getElementById('editSharesModal').addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const stockId = button.getAttribute('data-stock-id');
+    const stockShares = button.getAttribute('data-stock-shares');
+
+    const modal = this;
+    modal.querySelector('.modal-title').textContent = `Edit Shares for Stock ID ${stockId}`;
+    modal.querySelector('#editSharesStockId').value = stockId;
+    modal.querySelector('#id_shares').value = stockShares;
+});
+
+// Handle submitting the Edit Shares form
+document.getElementById('editSharesForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const formErrors = document.getElementById('editFormErrors');
+    formErrors.style.display = 'none';
+    const stockId = form.querySelector('#editSharesStockId').value;
+
+    fetch(`/edit_shares/${stockId}/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const stockListItem = document.querySelector(`#collapse${stockId}`).parentElement;
+            stockListItem.querySelector('.d-flex div:nth-child(2)').innerHTML = `
+                ${data.shares} shares worth $${data.current_worth.toFixed(2)}
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editSharesModal" data-stock-id="${stockId}" data-stock-shares="${data.shares}">
+                    Edit Shares
+                </button>
+                <form method="post" action="/delete_stock/${stockId}/" style="display:inline;">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            `;
             document.querySelector('[data-bs-dismiss="modal"]').click();
         } else {
             formErrors.innerHTML = '';

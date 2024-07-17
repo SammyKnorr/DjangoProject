@@ -1,16 +1,15 @@
 import os
 import requests
 import matplotlib
-import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+import matplotlib.pyplot as plt
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .forms import StockForm
+from .forms import StockForm, EditSharesForm
 from .models import Stock
-from django.shortcuts import get_object_or_404
 from chatbot import settings
 
 # Create your views here.
@@ -26,18 +25,33 @@ def your_stocks(request):
         if form.is_valid():
             stock_tag = form.cleaned_data.get('stock_tag')
             shares = form.cleaned_data.get('shares')
+            existing_stock = Stock.objects.filter(user=request.user, stock_tag=stock_tag).first()
+            if existing_stock:
+                return JsonResponse({'success': False, 'errors': {'stock_tag': ["You already have this stock in your portfolio."]}})
             stock = Stock.objects.create(user=request.user, stock_tag=stock_tag, shares=shares)
             generate_stock_graph(stock_tag)
             current_worth = calculate_current_worth(stock_tag, shares)
-            return JsonResponse({'success': True, 'stock_tag': stock_tag, 'stock_id': stock.id, 'shares': shares, 'current_price': current_worth / shares})
+            return JsonResponse({'success': True, 'stock_tag': stock_tag, 'stock_id': stock.id, 'shares': shares, 'current_price': current_worth / shares if shares else 0})
         else:
             return JsonResponse({'success': False, 'errors': form.errors})
 
     form = StockForm()
+    edit_form = EditSharesForm()
     stocks = Stock.objects.filter(user=request.user)
     for stock in stocks:
         stock.current_worth = calculate_current_worth(stock.stock_tag, stock.shares)
-    return render(request, 'your_stocks.html', {'stocks': stocks, 'form': form})
+    return render(request, 'your_stocks.html', {'stocks': stocks, 'form': form, 'edit_form': edit_form})
+
+@login_required
+def edit_shares(request, stock_id):
+    stock = get_object_or_404(Stock, id=stock_id, user=request.user)
+    if request.method == 'POST':
+        form = EditSharesForm(request.POST, instance=stock)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True, 'shares': stock.shares, 'current_worth': calculate_current_worth(stock.stock_tag, stock.shares)})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
 
 def generate_stock_graph(stock_tag):
     api_key = settings.ALPHAVANTAGE_API_KEY

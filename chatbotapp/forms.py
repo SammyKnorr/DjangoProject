@@ -1,4 +1,5 @@
 from django import forms
+from .models import Stock
 
 class StockForm(forms.Form):
     stock_tag = forms.CharField(max_length=10, help_text="Enter the stock tag (e.g., AAPL for Apple Inc.)")
@@ -9,3 +10,11 @@ class StockForm(forms.Form):
         if not stock_tag.isalnum():
             raise forms.ValidationError("Stock tag must be alphanumeric.")
         return stock_tag
+
+class EditSharesForm(forms.ModelForm):
+    class Meta:
+        model = Stock
+        fields = ['shares']
+        widgets = {
+            'shares': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+        }
