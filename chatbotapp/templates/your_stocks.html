@@ -101,6 +101,10 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+
 <script>
 const mediaUrl = "{{ MEDIA_URL }}";  // Pass MEDIA_URL to JavaScript
 
@@ -217,6 +221,27 @@ document.getElementById('editSharesForm').addEventListener('submit', function(ev
     })
     .catch(error => {
         console.error('Error:', error);
+    });
+});
+
+// Autocomplete functionality for stock tag
+$(document).ready(function() {
+    $("#id_stock_tag").autocomplete({
+        source: function(request, response) {
+            $.ajax({
+                url: "{% url 'autocomplete_stock_tags' %}",
+                data: {
+                    q: request.term
+                },
+                success: function(data) {
+                    response(data);
+                }
+            });
+        },
+        minLength: 2,
+        select: function(event, ui) {
+            $("#id_stock_tag").val(ui.item.value);
+        }
     });
 });
 </script>
