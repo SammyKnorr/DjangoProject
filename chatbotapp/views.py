@@ -89,9 +89,11 @@ def delete_stock(request, stock_id):
     return redirect('your_stocks')
 
 def calculate_current_worth(stock_tag, shares):
-    api_key = 'YOUR_ALPHA_VANTAGE_API_KEY'
+    api_key = settings.ALPHAVANTAGE_API_KEY
     url = f'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={stock_tag}&apikey={api_key}'
     response = requests.get(url)
     data = response.json()
+    if 'Global Quote' not in data:
+        return 0
     current_price = float(data['Global Quote']['05. price'])
     return current_price * shares
