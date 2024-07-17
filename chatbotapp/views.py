@@ -1,8 +1,8 @@
 import os
 import requests
 import matplotlib
-matplotlib.use('Agg')  # Use the 'Agg' backend for non-interactive plotting
 import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -14,22 +14,10 @@ from django.shortcuts import get_object_or_404
 from chatbot import settings
 
 # Create your views here.
-
+matplotlib.use('Agg')
 
 def home(request):
     return render(request, "home.html")
-
-def add_stock(request):
-    if request.method == "POST":
-        form = StockForm(request.POST)
-        if form.is_valid():
-            stock_tag = form.cleaned_data.get('stock_tag')
-            Stock.objects.create(user=request.user, stock_tag=stock_tag)
-            messages.success(request, f"Stock {stock_tag} added to your portfolio!")
-            return redirect('add_stock')
-    else:
-        form = StockForm()
-    return render(request, 'add_stock.html', {'form': form})
 
 @login_required
 def your_stocks(request):
@@ -56,14 +44,24 @@ def generate_stock_graph(stock_tag):
     time_series = data.get('Time Series (Daily)', {})
     dates = list(time_series.keys())
     dates.sort()
-    closing_prices = [float(time_series[date]['4. close']) for date in dates]
+
+    dates = [datetime.strptime(date, '%Y-%m-%d') for date in dates]
+
+    one_year_ago = datetime.now() - timedelta(days=365)
+    filtered_dates = [date for date in dates if date > one_year_ago]
+
+    closing_prices = [float(time_series[date.strftime('%Y-%m-%d')]['4. close']) for date in filtered_dates]
 
     plt.figure(figsize=(10, 5))
-    plt.plot(dates, closing_prices, label='Closing Price')
+    plt.plot(filtered_dates, closing_prices, label='Closing Price')
     plt.title(f'Stock Trends for {stock_tag}')
     plt.xlabel('Date')
     plt.ylabel('Closing Price')
     plt.xticks(rotation=45)
+    
+    plt.gca().xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%b %Y'))
+    plt.gca().xaxis.set_major_locator(plt.matplotlib.dates.MonthLocator())
+    
     plt.legend()
     plt.tight_layout()
 
@@ -76,7 +74,7 @@ def generate_stock_graph(stock_tag):
     plt.close()
 
     stock = Stock.objects.filter(stock_tag=stock_tag).order_by('-added_at').first()
-    stock.graph_path = graph_path
+    stock.graph_path = f'{stock_tag}.png'
     stock.save()
 
 @login_required
