@@ -21,6 +21,7 @@
                     {% endif %}
                 </div>
                 <div>
+                    {{ stock.shares }} shares worth ${{ stock.current_worth|floatformat:2 }}
                     <form method="post" action="{% url 'delete_stock' stock.id %}" style="display:inline;">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger btn-sm">Delete</button>
@@ -48,6 +49,12 @@
                         <div class="form-text">{{ form.stock_tag.help_text }}</div>
                         <div id="formErrors" class="alert alert-danger" style="display: none;"></div>
                     </div>
+                    <div class="mb-3">
+                        {{ form.shares.label_tag }}
+                        {{ form.shares }}
+                        <div class="form-text">{{ form.shares.help_text }}</div>
+                        <div id="formErrors" class="alert alert-danger" style="display: none;"></div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -59,7 +66,7 @@
 </div>
 
 <script>
-const mediaUrl = "{{ MEDIA_URL }}";
+const mediaUrl = "{{ MEDIA_URL }}";  // Pass MEDIA_URL to JavaScript
 
 document.getElementById('addStockForm').addEventListener('submit', function(event) {
     event.preventDefault();
@@ -87,6 +94,7 @@ document.getElementById('addStockForm').addEventListener('submit', function(even
                     <div><img src="${mediaUrl}${data.stock_tag}.png" alt="Stock graph for ${data.stock_tag}" class="img-fluid"></div>
                 </div>
                 <div>
+                    ${data.shares} shares worth $${(data.shares * data.current_price).toFixed(2)}
                     <form method="post" action="/delete_stock/${data.stock_id}/" style="display:inline;">
                         <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
                         <button type="submit" class="btn btn-danger btn-sm">Delete</button>

@@ -25,14 +25,18 @@ def your_stocks(request):
         form = StockForm(request.POST)
         if form.is_valid():
             stock_tag = form.cleaned_data.get('stock_tag')
-            stock = Stock.objects.create(user=request.user, stock_tag=stock_tag)
+            shares = form.cleaned_data.get('shares')
+            stock = Stock.objects.create(user=request.user, stock_tag=stock_tag, shares=shares)
             generate_stock_graph(stock_tag)
-            return JsonResponse({'success': True, 'stock_tag': stock_tag, 'stock_id': stock.id})
+            current_worth = calculate_current_worth(stock_tag, shares)
+            return JsonResponse({'success': True, 'stock_tag': stock_tag, 'stock_id': stock.id, 'shares': shares, 'current_price': current_worth / shares})
         else:
             return JsonResponse({'success': False, 'errors': form.errors})
 
     form = StockForm()
     stocks = Stock.objects.filter(user=request.user)
+    for stock in stocks:
+        stock.current_worth = calculate_current_worth(stock.stock_tag, stock.shares)
     return render(request, 'your_stocks.html', {'stocks': stocks, 'form': form})
 
 def generate_stock_graph(stock_tag):
@@ -83,3 +87,11 @@ def delete_stock(request, stock_id):
     stock.delete()
     messages.success(request, f'Stock {stock.stock_tag} has been deleted.')
     return redirect('your_stocks')
+
+def calculate_current_worth(stock_tag, shares):
+    api_key = 'YOUR_ALPHA_VANTAGE_API_KEY'
+    url = f'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={stock_tag}&apikey={api_key}'
+    response = requests.get(url)
+    data = response.json()
+    current_price = float(data['Global Quote']['05. price'])
+    return current_price * shares
