@@ -101,136 +101,47 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- jQuery -->
+<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script> <!-- jQuery UI -->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css"> <!-- jQuery UI CSS -->
+
 <script>
-const mediaUrl = "{{ MEDIA_URL }}";  // Pass MEDIA_URL to JavaScript
-
-document.getElementById('addStockForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-    const form = event.target;
-    const formData = new FormData(form);
-    const formErrors = document.getElementById('formErrors');
-    formErrors.style.display = 'none';
-
-    fetch(form.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const stockList = document.getElementById('stockList');
-            const newStockItem = document.createElement('li');
-            newStockItem.className = 'list-group-item';
-            newStockItem.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <a class="text-decoration-none" data-bs-toggle="collapse" href="#collapse${data.stock_id}" role="button" aria-expanded="false" aria-controls="collapse${data.stock_id}">
-                            ${data.stock_tag} - Added just now
-                        </a>
-                    </div>
-                    <div>
-                        ${data.shares} shares worth $${(data.shares * data.current_price).toFixed(2)}
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editSharesModal" data-stock-id="${data.stock_id}" data-stock-shares="${data.shares}">
-                            Edit Shares
-                        </button>
-                        <form method="post" action="/delete_stock/${data.stock_id}/" style="display:inline;">
-                            <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                        </form>
-                    </div>
-                </div>
-                <div class="collapse mt-2" id="collapse${data.stock_id}">
-                    <div>
-                        <img src="${mediaUrl}${data.stock_tag}.png?${new Date().getTime()}" alt="Stock graph for ${data.stock_tag}" class="img-fluid">
-                    </div>
-                </div>
-            `;
-            stockList.appendChild(newStockItem);
-            form.reset();
-            document.querySelector('[data-bs-dismiss="modal"]').click();
-        } else {
-            formErrors.innerHTML = '';
-            for (const error in data.errors) {
-                formErrors.innerHTML += `${data.errors[error]}<br>`;
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
             }
-            formErrors.style.display = 'block';
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-});
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
 
-// Handle opening the Edit Shares modal
-document.getElementById('editSharesModal').addEventListener('show.bs.modal', function (event) {
-    const button = event.relatedTarget;
-    const stockId = button.getAttribute('data-stock-id');
-    const stockShares = button.getAttribute('data-stock-shares');
-
-    const modal = this;
-    modal.querySelector('.modal-title').textContent = `Edit Shares for Stock ID ${stockId}`;
-    modal.querySelector('#editSharesStockId').value = stockId;
-    modal.querySelector('#id_shares').value = stockShares;
-});
-
-// Handle submitting the Edit Shares form
-document.getElementById('editSharesForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-    const form = event.target;
-    const formData = new FormData(form);
-    const formErrors = document.getElementById('editFormErrors');
-    formErrors.style.display = 'none';
-    const stockId = form.querySelector('#editSharesStockId').value;
-
-    fetch(`/edit_shares/${stockId}/`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const stockListItem = document.querySelector(`#collapse${stockId}`).parentElement;
-            stockListItem.querySelector('.d-flex div:nth-child(2)').innerHTML = `
-                ${data.shares} shares worth $${data.current_worth.toFixed(2)}
-                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editSharesModal" data-stock-id="${stockId}" data-stock-shares="${data.shares}">
-                    Edit Shares
-                </button>
-                <form method="post" action="/delete_stock/${stockId}/" style="display:inline;">
-                    <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
-                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                </form>
-            `;
-            document.querySelector('[data-bs-dismiss="modal"]').click();
-        } else {
-            formErrors.innerHTML = '';
-            for (const error in data.errors) {
-                formErrors.innerHTML += `${data.errors[error]}<br>`;
-            }
-            formErrors.style.display = 'block';
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-});
-
-// Autocomplete functionality for stock tag
 $(document).ready(function() {
+    console.log("jQuery and jQuery UI loaded");
+
     $("#id_stock_tag").autocomplete({
         source: function(request, response) {
+            console.log("Autocomplete request:", request);
             $.ajax({
                 url: "{% url 'autocomplete_stock_tags' %}",
                 data: {
                     q: request.term
                 },
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
                 success: function(data) {
+                    console.log("Autocomplete response data:", data);
                     response(data);
+                },
+                error: function(error) {
+                    console.log("Autocomplete error:", error);
                 }
             });
         },
@@ -238,6 +149,122 @@ $(document).ready(function() {
         select: function(event, ui) {
             $("#id_stock_tag").val(ui.item.value);
         }
+    });
+
+    document.getElementById('addStockForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const formErrors = document.getElementById('formErrors');
+        formErrors.style.display = 'none';
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const stockList = document.getElementById('stockList');
+                const newStockItem = document.createElement('li');
+                newStockItem.className = 'list-group-item';
+                newStockItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <a class="text-decoration-none" data-bs-toggle="collapse" href="#collapse${data.stock_id}" role="button" aria-expanded="false" aria-controls="collapse${data.stock_id}">
+                                ${data.stock_tag} - Added just now
+                            </a>
+                        </div>
+                        <div>
+                            ${data.shares} shares worth $${(data.shares * data.current_price).toFixed(2)}
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editSharesModal" data-stock-id="${data.stock_id}" data-stock-shares="${data.shares}">
+                                Edit Shares
+                            </button>
+                            <form method="post" action="/delete_stock/${data.stock_id}/" style="display:inline;">
+                                <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="collapse mt-2" id="collapse${data.stock_id}">
+                        <div>
+                            <img src="${mediaUrl}${data.stock_tag}.png?${new Date().getTime()}" alt="Stock graph for ${data.stock_tag}" class="img-fluid">
+                        </div>
+                    </div>
+                `;
+                stockList.appendChild(newStockItem);
+                form.reset();
+                document.querySelector('[data-bs-dismiss="modal"]').click();
+            } else {
+                formErrors.innerHTML = '';
+                for (const error in data.errors) {
+                    formErrors.innerHTML += `${data.errors[error]}<br>`;
+                }
+                formErrors.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
+
+    // Handle opening the Edit Shares modal
+    document.getElementById('editSharesModal').addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const stockId = button.getAttribute('data-stock-id');
+        const stockShares = button.getAttribute('data-stock-shares');
+
+        const modal = this;
+        modal.querySelector('.modal-title').textContent = `Edit Shares for Stock ID ${stockId}`;
+        modal.querySelector('#editSharesStockId').value = stockId;
+        modal.querySelector('#id_shares').value = stockShares;
+    });
+
+    // Handle submitting the Edit Shares form
+    document.getElementById('editSharesForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const formErrors = document.getElementById('editFormErrors');
+        formErrors.style.display = 'none';
+        const stockId = form.querySelector('#editSharesStockId').value;
+
+        fetch(`/edit_shares/${stockId}/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const stockListItem = document.querySelector(`#collapse${stockId}`).parentElement;
+                stockListItem.querySelector('.d-flex div:nth-child(2)').innerHTML = `
+                    ${data.shares} shares worth $${data.current_worth.toFixed(2)}
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editSharesModal" data-stock-id="${stockId}" data-stock-shares="${data.shares}">
+                        Edit Shares
+                    </button>
+                    <form method="post" action="/delete_stock/${stockId}/" style="display:inline;">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                `;
+                document.querySelector('[data-bs-dismiss="modal"]').click();
+            } else {
+                formErrors.innerHTML = '';
+                for (const error in data.errors) {
+                    formErrors.innerHTML += `${data.errors[error]}<br>`;
+                }
+                formErrors.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     });
 });
 </script>

@@ -25,6 +25,7 @@ def autocomplete_stock_tags(request):
     url = f'https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={query}&apikey={api_key}'
     response = requests.get(url)
     data = response.json()
+
     results = []
     if 'bestMatches' in data:
         for match in data['bestMatches']:
