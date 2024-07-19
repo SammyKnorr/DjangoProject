@@ -57,6 +57,7 @@
                     <div class="mb-3">
                         {{ form.stock_tag.label_tag }}
                         {{ form.stock_tag }}
+                        <!-- Ensure the input field has the ID 'id_stock_tag' -->
                         <div class="form-text">{{ form.stock_tag.help_text }}</div>
                         <div id="formErrors" class="alert alert-danger" style="display: none;"></div>
                     </div>
@@ -105,6 +106,7 @@
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script> <!-- jQuery UI -->
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css"> <!-- jQuery UI CSS -->
 
+{% block javascript %}
 <script>
 function getCookie(name) {
     let cookieValue = null;
@@ -125,30 +127,8 @@ const csrftoken = getCookie('csrftoken');
 $(document).ready(function() {
     console.log("jQuery and jQuery UI loaded");
 
-    $("#id_stock_tag").autocomplete({
-        source: function(request, response) {
-            console.log("Autocomplete request:", request);
-            $.ajax({
-                url: "{% url 'autocomplete_stock_tags' %}",
-                data: {
-                    q: request.term
-                },
-                headers: {
-                    'X-CSRFToken': csrftoken
-                },
-                success: function(data) {
-                    console.log("Autocomplete response data:", data);
-                    response(data);
-                },
-                error: function(error) {
-                    console.log("Autocomplete error:", error);
-                }
-            });
-        },
-        minLength: 2,
-        select: function(event, ui) {
-            $("#id_stock_tag").val(ui.item.value);
-        }
+    $('#addStockModal').on('shown.bs.modal', function () {
+        initializeAutocomplete();
     });
 
     document.getElementById('addStockForm').addEventListener('submit', function(event) {
@@ -268,5 +248,7 @@ $(document).ready(function() {
     });
 });
 </script>
+
+{% endblock %}
 
 {% endblock %}

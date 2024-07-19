@@ -2,8 +2,16 @@ from django import forms
 from .models import Stock
 
 class StockForm(forms.Form):
-    stock_tag = forms.CharField(max_length=10, help_text="Enter the stock tag (e.g., AAPL for Apple Inc.)")
-    shares = forms.IntegerField(min_value=1, help_text="Enter the number of shares owned")
+    stock_tag = forms.CharField(
+        max_length=10,
+        help_text="Enter the stock tag (e.g., AAPL for Apple Inc.)",
+        widget=forms.TextInput(attrs={'id': 'id_stock_tag'})
+    )
+    shares = forms.IntegerField(
+        min_value=1,
+        help_text="Enter the number of shares owned",
+        widget=forms.NumberInput(attrs={'id': 'id_shares'})
+    )
 
     def clean_stock_tag(self):
         stock_tag = self.cleaned_data.get('stock_tag')

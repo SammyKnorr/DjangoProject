@@ -19,19 +19,6 @@ matplotlib.use('Agg')
 def home(request):
     return render(request, "home.html")
 
-def autocomplete_stock_tags(request):
-    query = request.GET.get('q', '')
-    api_key = settings.ALPHAVANTAGE_API_KEY
-    url = f'https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={query}&apikey={api_key}'
-    response = requests.get(url)
-    data = response.json()
-
-    results = []
-    if 'bestMatches' in data:
-        for match in data['bestMatches']:
-            results.append(match['1. symbol'])
-
-    return JsonResponse(results, safe=False)
 
 @login_required
 def your_stocks(request):
