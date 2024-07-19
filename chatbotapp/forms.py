@@ -13,10 +13,16 @@ class StockForm(forms.Form):
         widget=forms.NumberInput(attrs={'id': 'id_shares'})
     )
 
+    def __init__(self, valid_symbols, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.valid_symbols = valid_symbols
+
     def clean_stock_tag(self):
         stock_tag = self.cleaned_data.get('stock_tag')
         if not stock_tag.isalnum():
             raise forms.ValidationError("Stock tag must be alphanumeric.")
+        if stock_tag not in self.valid_symbols:
+            raise forms.ValidationError("Invalid stock tag.")
         return stock_tag
 
 class EditSharesForm(forms.ModelForm):

@@ -12,18 +12,19 @@ from django.contrib import messages
 from .forms import StockForm, EditSharesForm
 from .models import Stock
 from chatbot import settings
+from .utils import load_valid_symbols
 
 # Create your views here.
 matplotlib.use('Agg')
 
 def home(request):
     return render(request, "home.html")
-
+valid_symbols = load_valid_symbols('validTags.xlsx')
 
 @login_required
 def your_stocks(request):
     if request.method == "POST":
-        form = StockForm(request.POST)
+        form = StockForm(valid_symbols, request.POST)
         if form.is_valid():
             stock_tag = form.cleaned_data.get('stock_tag')
             shares = form.cleaned_data.get('shares')
@@ -37,13 +38,14 @@ def your_stocks(request):
         else:
             return JsonResponse({'success': False, 'errors': form.errors})
 
-    form = StockForm()
+    form = StockForm(valid_symbols)
     edit_form = EditSharesForm()
     stocks = Stock.objects.filter(user=request.user)
     for stock in stocks:
         stock.current_worth = calculate_current_worth(stock.stock_tag, stock.shares)
         generate_stock_graph(stock.stock_tag)  # Regenerate graph for each stock
     return render(request, 'your_stocks.html', {'stocks': stocks, 'form': form, 'edit_form': edit_form})
+
 
 @login_required
 def edit_shares(request, stock_id):

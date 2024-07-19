@@ -52,20 +52,19 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form method="post" id="addStockForm">
+                <form method="post" id="addStockForm" action="{% url 'your_stocks' %}">
                     {% csrf_token %}
                     <div class="mb-3">
                         {{ form.stock_tag.label_tag }}
                         {{ form.stock_tag }}
-                        <!-- Ensure the input field has the ID 'id_stock_tag' -->
                         <div class="form-text">{{ form.stock_tag.help_text }}</div>
-                        <div id="formErrors" class="alert alert-danger" style="display: none;"></div>
+                        <div id="formErrorsStockTag" class="alert alert-danger" style="display: none;"></div>
                     </div>
                     <div class="mb-3">
                         {{ form.shares.label_tag }}
                         {{ form.shares }}
                         <div class="form-text">{{ form.shares.help_text }}</div>
-                        <div id="formErrors" class="alert alert-danger" style="display: none;"></div>
+                        <div id="formErrorsShares" class="alert alert-danger" style="display: none;"></div>
                     </div>
                 </form>
             </div>
@@ -125,18 +124,14 @@ function getCookie(name) {
 const csrftoken = getCookie('csrftoken');
 
 $(document).ready(function() {
-    console.log("jQuery and jQuery UI loaded");
-
-    $('#addStockModal').on('shown.bs.modal', function () {
-        initializeAutocomplete();
-    });
-
     document.getElementById('addStockForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
-        const formErrors = document.getElementById('formErrors');
-        formErrors.style.display = 'none';
+        const formErrorsStockTag = document.getElementById('formErrorsStockTag');
+        const formErrorsShares = document.getElementById('formErrorsShares');
+        formErrorsStockTag.style.display = 'none';
+        formErrorsShares.style.display = 'none';
 
         fetch(form.action, {
             method: 'POST',
@@ -171,7 +166,7 @@ $(document).ready(function() {
                     </div>
                     <div class="collapse mt-2" id="collapse${data.stock_id}">
                         <div>
-                            <img src="${mediaUrl}${data.stock_tag}.png?${new Date().getTime()}" alt="Stock graph for ${data.stock_tag}" class="img-fluid">
+                            <img src="{{ MEDIA_URL }}${data.stock_tag}.png?${new Date().getTime()}" alt="Stock graph for ${data.stock_tag}" class="img-fluid">
                         </div>
                     </div>
                 `;
@@ -179,11 +174,14 @@ $(document).ready(function() {
                 form.reset();
                 document.querySelector('[data-bs-dismiss="modal"]').click();
             } else {
-                formErrors.innerHTML = '';
-                for (const error in data.errors) {
-                    formErrors.innerHTML += `${data.errors[error]}<br>`;
+                if (data.errors.stock_tag) {
+                    formErrorsStockTag.innerHTML = data.errors.stock_tag.join('<br>');
+                    formErrorsStockTag.style.display = 'block';
                 }
-                formErrors.style.display = 'block';
+                if (data.errors.shares) {
+                    formErrorsShares.innerHTML = data.errors.shares.join('<br>');
+                    formErrorsShares.style.display = 'block';
+                }
             }
         })
         .catch(error => {
