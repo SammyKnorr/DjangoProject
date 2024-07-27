@@ -13,6 +13,13 @@ from .forms import StockForm, EditSharesForm
 from .models import Stock
 from chatbot import settings
 from .utils import load_valid_symbols
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .serializers import StockSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 # Create your views here.
 matplotlib.use('Agg')
@@ -115,3 +122,33 @@ def calculate_current_worth(stock_tag, shares):
         return 0
     current_price = float(data['Global Quote']['05. price'])
     return current_price * shares
+
+class StockAddView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.valid_symbols = valid_symbols
+
+    def post(self, request, *args, **kwargs):
+        serializer = StockSerializer(data=request.data, valid_symbols=self.valid_symbols)
+        if serializer.is_valid():
+            stock_tag = serializer.validated_data['stock_tag']
+            shares = serializer.validated_data['shares']
+            existing_stock = Stock.objects.filter(user=request.user, stock_tag=stock_tag).first()
+            if existing_stock:
+                return Response({'success': False, 'errors': {'stock_tag': ["You already have this stock in your portfolio."]}}, status=status.HTTP_400_BAD_REQUEST)
+
+            stock = Stock.objects.create(user=request.user, stock_tag=stock_tag, shares=shares)
+            generate_stock_graph(stock_tag)
+            current_worth = calculate_current_worth(stock_tag, shares)
+            return Response({
+                'success': True,
+                'stock_tag': stock_tag,
+                'stock_id': stock.id,
+                'shares': shares,
+                'current_price': current_worth / shares if shares else 0
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
