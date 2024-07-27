@@ -49,6 +49,9 @@
           <li class="nav-item active">
             <a class="nav-link" href="{% url 'home' %}">Home</a>
           </li>
+          <li class="nav-item active">
+            <a class="nav-link" href="{% url 'predict_stock' %}">Stock Predict</a>
+          </li>
           {% if user.is_authenticated %}
           <li class="nav-item active">
             <a class="nav-link" href="{% url 'your_stocks' %}">Your Stocks</a>

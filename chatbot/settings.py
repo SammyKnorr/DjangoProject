@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "chatbotapp",
     "members",
-    # "stockpredictions"
+    "stockpredictions"
 ]
 
 MIDDLEWARE = [

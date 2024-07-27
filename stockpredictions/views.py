@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from .forms import StockPredictionForm
-from .model import stock_predictor
+import requests
+import json
 
 def predict_stock(request):
     if request.method == 'POST':
@@ -8,9 +9,10 @@ def predict_stock(request):
         if form.is_valid():
             stock_symbol = form.cleaned_data['stock_symbol']
             date = form.cleaned_data['date']
-            prediction_input = f"{stock_symbol} {date}"
-            prediction = stock_predictor.predict(prediction_input)
-            return render(request, 'stockpredictions/result.html', {'prediction': prediction})
+            url='https://ptoar7b9u5.execute-api.us-east-2.amazonaws.com/prod'
+            myobj = json.dumps({"inputs":f"predict the closing value on {date} for {stock_symbol}"})
+            x= requests.post(url, data=myobj, headers={'content-type':'application/json','x-api-key':''})
+            return render(request, 'predictions/result.html', {'prediction': x.text})
     else:
         form = StockPredictionForm()
-    return render(request, 'stockpredictions/predict.html', {'form': form})
+    return render(request, 'predictions/predict.html', {'form': form})
