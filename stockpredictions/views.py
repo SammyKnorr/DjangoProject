@@ -12,7 +12,7 @@ def predict_stock(request):
             url='https://ptoar7b9u5.execute-api.us-east-2.amazonaws.com/prod'
             myobj = json.dumps({"inputs":f"predict the closing value on {date} for {stock_symbol}"})
             x= requests.post(url, data=myobj, headers={'content-type':'application/json','x-api-key':''})
-            return render(request, 'predictions/result.html', {'prediction': x.text})
+            return render(request, 'predictions/result.html', {'prediction': json.loads(x.text)[0]["generated_text"]})
     else:
         form = StockPredictionForm()
     return render(request, 'predictions/predict.html', {'form': form})

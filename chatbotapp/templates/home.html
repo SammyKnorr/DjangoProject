@@ -8,10 +8,10 @@
 
 <div class="jumbotron text-center">
     <h1 class="display-4">Welcome to the Stock Trends Chatbot!</h1>
-    <p class="lead">Get the latest stock trends and suggestions from our intelligent chatbot.</p>
+    <p class="lead">Get the latest stock trends and suggestions from our intelligent Llama model.</p>
     <hr class="my-4">
     <p>Start exploring stock trends now.</p>
-    <a class="btn btn-turquoise btn-lg" href="#" role="button">Learn more</a>
+    <a class="btn btn-turquoise btn-lg" href="{% url 'predict_stock' %}" role="button">Predict!</a>
 </div>
 
 <div class="container mt-5">
@@ -22,7 +22,7 @@
         </div>
         <div class="col-md-6">
             <h2>How It Works</h2>
-            <p>Simply ask our chatbot about any stock, and it will provide you with the latest trends and suggestions.</p>
+            <p>Simply select one of the three supported ETF's along with a date, and it will provide you with the predicted closing price.</p>
         </div>
     </div>
 </div>
